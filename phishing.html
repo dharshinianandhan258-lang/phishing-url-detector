@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Simple Phishing Detector</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      padding: 50px;
+    }
+    .card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      width: 400px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      cursor: pointer;
+      background: #4caf50;
+      color: white;
+      border: none;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .bad {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .good {
+      background: #d4edda;
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Phishing URL Detector</h2>
+    <input id="url" placeholder="Enter URL here">
+    <button onclick="analyze()">Check URL</button>
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    const suspicious = ["login", "secure", "verify", "confirm", "account", "paypal", "apple", "bank"];
+
+    function isValidUrl(string) {
+      // Basic URL validation regex
+      const urlPattern = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/;
+      return urlPattern.test(string);
+    }
+
+    function analyze() {
+      let url = document.getElementById('url').value.trim();
+      if (!url) return alert("Enter a URL");
+
+      // Check if the input is a valid URL format
+      if (!isValidUrl(url)) {
+        const res = document.getElementById('result');
+        res.className = "result bad";
+        res.innerText = "⚠ Invalid URL Format";
+        return;
+      }
+
+      // Prepend http:// if no protocol is specified
+      if (!/^https?:\/\//.test(url)) url = "http://" + url;
+
+      let score = 0;
+      try {
+        let u = new URL(url);
+        if (u.href.includes("@")) score += 30;
+        if (/^\d{1,3}(\.\d{1,3}){3}$/.test(u.hostname)) score += 30;
+        if (u.protocol !== "https:") score += 10;
+        if (u.hostname.length > 30) score += 10;
+        suspicious.forEach(k => { if (url.toLowerCase().includes(k)) score += 20; });
+      } catch (e) {
+        score = 100; // Invalid URLs are suspicious
+      }
+
+      const res = document.getElementById('result');
+      if (score >= 50) {
+        res.className = "result bad";
+        res.innerText = "⚠ Suspicious / Possible Phishing";
+      } else {
+        res.className = "result good";
+        res.innerText = "✅ Likely Safe";
+      }
+    }
+  </script>
+</body>
+</html>
